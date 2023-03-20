@@ -18,6 +18,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -71,7 +72,16 @@ public class BusRestController {
     }
 
     @PatchMapping("/update-bus/{id}")
-    public ResponseEntity<Bus> updateBus(@PathVariable int id, @RequestBody Bus bus) {
+    public ResponseEntity<BusDTO> updateBus(@PathVariable int id, @Validated @RequestBody BusDTO busDTO, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return new ResponseEntity<>(busDTO, HttpStatus.NOT_FOUND);
+        }
+        Bus bus1 = busService.findBusById(id);
+        if (bus1 == null) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        Bus bus = new Bus();
+        BeanUtils.copyProperties(busDTO, bus);
         bus.setId(id);
         busService.saveBus(bus);
         return new ResponseEntity<>(HttpStatus.OK);
@@ -87,7 +97,7 @@ public class BusRestController {
     }
 
     @PostMapping("/save-bus")
-    public ResponseEntity<BusDTO> saveBus(@RequestBody @Validated BusDTO busDTO, BindingResult bindingResult) {
+    public ResponseEntity<BusDTO> saveBus(@Validated @RequestBody BusDTO busDTO, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return new ResponseEntity<>(busDTO, HttpStatus.NOT_FOUND);
         }
